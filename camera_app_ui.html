@@ -1,0 +1,1130 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Locket Wan</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@700&family=Inter:wght@400;500;600;700;800;900&display=swap"
+    rel="stylesheet">
+  <style>
+    :root {
+      --accent: #FFD600;
+      --bg: #000;
+      --surface: #121212;
+      --glass: rgba(255, 255, 255, 0.1);
+      --glass-border: rgba(255, 255, 255, 0.2);
+      --radius-xl: 65px;
+      --radius-l: 30px;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: var(--bg);
+      color: #fff;
+      width: 100vw;
+      height: 100vh;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    /* The container now fills the screen but has a max-width for better desktop viewing if desired */
+    #app {
+      width: 100%;
+      height: 100%;
+      max-width: 500px;
+      position: relative;
+      overflow: hidden;
+      background: #000;
+    }
+
+    /* Full screen adjustments for truly responsive feel */
+    @media (max-width: 500px) {
+      #app {
+        max-width: 100%;
+      }
+    }
+
+    /* Navigation system */
+    .viewport {
+      width: 100%;
+      height: 100%;
+      position: relative;
+      transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .screen {
+      width: 100%;
+      height: 100%;
+      position: absolute;
+      left: 0;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    #screenLogin {
+      top: 0;
+    }
+
+    #screenCamera {
+      top: 100%;
+    }
+
+    #screenHistory {
+      top: 200%;
+    }
+
+    /* Login Screen */
+    .screen-login {
+      padding: 40px 24px;
+      justify-content: center;
+      background: linear-gradient(180deg, #000 0%, #1a1a1b 100%);
+    }
+
+    .login-title {
+      font-family: 'Dancing Script', cursive;
+      font-size: 64px;
+      color: var(--accent);
+      text-align: center;
+      margin-bottom: 40px;
+      text-shadow: 0 0 20px rgba(255, 214, 0, 0.3);
+    }
+
+    .login-card {
+      background: var(--surface);
+      border-radius: var(--radius-l);
+      padding: 40px 24px;
+      border: 1px solid var(--glass-border);
+      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+    }
+
+    .input-group {
+      margin-bottom: 24px;
+    }
+
+    .input-group label {
+      display: block;
+      font-size: 11px;
+      font-weight: 800;
+      color: #888;
+      margin-bottom: 8px;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+    }
+
+    .input-group input {
+      width: 100%;
+      height: 56px;
+      background: #1c1c1e;
+      border: 1.5px solid transparent;
+      border-radius: 16px;
+      padding: 0 18px;
+      color: #fff;
+      font-size: 16px;
+      outline: none;
+      transition: all 0.3s;
+    }
+
+    .input-group input:focus {
+      border-color: var(--accent);
+      background: #252528;
+    }
+
+    .btn-full {
+      width: 100%;
+      height: 60px;
+      background: var(--accent);
+      border: none;
+      border-radius: 20px;
+      color: #000;
+      font-size: 18px;
+      font-weight: 900;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+    }
+
+    .btn-full:active {
+      transform: scale(0.96);
+      filter: brightness(0.9);
+    }
+
+    .btn-full:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+
+    /* Camera UI elements */
+    .header {
+      height: 80px;
+      padding: 40px 24px 0;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .header-avatar {
+      width: 42px;
+      height: 42px;
+      border-radius: 50%;
+      border: 2px solid var(--accent);
+      object-fit: cover;
+    }
+
+    .friends-pill {
+      background: var(--surface);
+      padding: 10px 18px;
+      border-radius: 24px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 14px;
+      font-weight: 800;
+      border: 1px solid var(--glass-border);
+    }
+
+    .cam-wrapper {
+      margin: 20px 24px;
+      flex: 1;
+      aspect-ratio: 1/1;
+      border-radius: var(--radius-xl);
+      overflow: hidden;
+      position: relative;
+      background: #111;
+      box-shadow: 0 30px 60px rgba(0, 0, 0, 0.6);
+    }
+
+    #videoEl,
+    #photoCanvas {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    #videoEl.mirrored {
+      transform: scaleX(-1);
+    }
+
+    .cam-overlays {
+      position: absolute;
+      top: 24px;
+      left: 24px;
+      right: 24px;
+      display: flex;
+      justify-content: space-between;
+    }
+
+    .icon-btn-sm {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background: rgba(0, 0, 0, 0.4);
+      backdrop-filter: blur(15px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      cursor: pointer;
+      border: none;
+    }
+
+    .controls {
+      padding: 20px 24px 60px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 30px;
+    }
+
+    .shutter-ring {
+      width: 88px;
+      height: 88px;
+      border-radius: 50%;
+      background: #fff;
+      padding: 6px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      position: relative;
+    }
+
+    .shutter-ring:active {
+      transform: scale(0.9);
+    }
+
+    .shutter-ring.recording {
+      transform: scale(1.2);
+      background: #ff3b30;
+    }
+
+    .shutter-ring::after {
+      content: '';
+      position: absolute;
+      inset: -8px;
+      border: 4px solid transparent;
+      border-radius: 50%;
+      transition: all 0.2s;
+    }
+
+    .shutter-ring.recording::after {
+      border-color: rgba(255, 59, 48, 0.3);
+      animation: pulse 1.5s infinite;
+    }
+
+    @keyframes pulse {
+      0% { transform: scale(1); opacity: 1; }
+      100% { transform: scale(1.3); opacity: 0; }
+    }
+
+    .shutter-inner {
+      width: 100%;
+      height: 100%;
+      border-radius: 50%;
+      border: 3px solid #eee;
+      transition: all 0.2s;
+    }
+
+    .shutter-ring.recording .shutter-inner {
+      border-radius: 8px;
+      transform: scale(0.4);
+    }
+
+    .control-row {
+      width: 100%;
+      display: flex;
+      justify-content: space-around;
+      align-items: center;
+    }
+
+    /* History Screen */
+    .history-header {
+      padding: 60px 24px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid var(--glass-border);
+    }
+
+    .moments-grid {
+      flex: 1;
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 2px;
+      overflow-y: auto;
+      padding: 2px;
+    }
+
+    .moment {
+      aspect-ratio: 1/1;
+      background: #1a1a1b;
+    }
+
+    .moment img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .modal {
+      position: absolute;
+      inset: 0;
+      background: #000;
+      z-index: 500;
+      display: none;
+      flex-direction: column;
+    }
+
+    .modal.active {
+      display: flex;
+    }
+
+    .modal-header {
+      padding: 60px 24px 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: rgba(0,0,0,0.8);
+      backdrop-filter: blur(20px);
+      border-bottom: 1px solid #1a1a1b;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+
+    .friends-list {
+      flex: 1;
+      overflow-y: auto;
+      padding: 10px 0;
+    }
+
+    .friend {
+      display: flex;
+      align-items: center;
+      padding: 14px 24px;
+      gap: 16px;
+      transition: background 0.2s;
+      cursor: pointer;
+    }
+
+    .friend:active {
+      background: #1a1a1b;
+    }
+
+    .friend img {
+      width: 52px;
+      height: 52px;
+      border-radius: 50%;
+      object-fit: cover;
+      background: #222;
+      border: 2px solid transparent;
+      transition: border-color 0.2s;
+    }
+
+    .friend.selected img {
+      border-color: var(--accent);
+    }
+
+    .friend-info {
+      flex: 1;
+    }
+
+    .friend-name {
+      font-weight: 800;
+      font-size: 16px;
+      color: #fff;
+    }
+
+    .friend-user {
+      font-size: 13px;
+      color: #777;
+    }
+
+    .chk {
+      width: 26px;
+      height: 26px;
+      border-radius: 50%;
+      border: 2px solid #333;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s;
+    }
+
+    .friend.selected .chk {
+      background: var(--accent);
+      border-color: var(--accent);
+    }
+
+    .friend.selected .chk::after {
+      content: '✓';
+      color: #000;
+      font-weight: 900;
+      font-size: 14px;
+    }
+
+    .modal-footer {
+      padding: 24px 24px 60px;
+      background: #000;
+      border-top: 1px solid #1a1a1b;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    #momentCaption {
+      width: 100%;
+      background: #121212;
+      border: 1px solid #222;
+      border-radius: 16px;
+      padding: 16px;
+      color: #fff;
+      font-size: 16px;
+      font-family: inherit;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    #momentCaption:focus {
+      border-color: var(--accent);
+    }
+
+    .preview-container {
+      width: 100%;
+      aspect-ratio: 1/1;
+      background: #000;
+      position: relative;
+    }
+
+    .preview-container img, .preview-container video {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .spinner {
+      width: 22px;
+      height: 22px;
+      border: 3.5px solid rgba(0, 0, 0, 0.1);
+      border-top-color: #000;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+  </style>
+</head>
+
+<body>
+
+  <div id="app">
+    <div class="viewport" id="viewport">
+      <!-- SCREEN 0: LOGIN -->
+      <div class="screen screen-login" id="screenLogin">
+        <div class="login-card">
+          <div class="input-group">
+            <label>EMAIL</label>
+            <input type="email" id="email" placeholder="Nhập email của bạn" value="">
+          </div>
+          <div class="input-group">
+            <label>MẬT KHẨU</label>
+            <input type="password" id="password" placeholder="••••••••" value="">
+          </div>
+          <button class="btn-full" id="btnLogin">Đăng Nhập</button>
+        </div>
+      </div>
+
+      <!-- SCREEN 1: CAMERA -->
+      <div class="screen" id="screenCamera">
+        <div class="header">
+          <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=Felix" class="header-avatar" id="myAvatar">
+          <div class="friends-pill">
+            <span id="friendsCount">0</span> bạn
+          </div>
+        </div>
+
+        <div class="cam-wrapper">
+          <video id="videoEl" autoplay playsinline muted class="mirrored"></video>
+          <canvas id="photoCanvas" style="display:none;"></canvas>
+          <div class="cam-overlays">
+            <button class="icon-btn-sm" id="flashBtn">⚡</button>
+            <button class="icon-btn-sm" id="btnFlipTop">🔄</button>
+          </div>
+        </div>
+
+        <div class="controls">
+          <div class="control-row">
+            <button class="icon-btn-sm" id="btnGallery">🖼</button>
+            <input type="file" id="fileInput" accept="image/*,video/*" style="display:none">
+            <div class="shutter-ring" id="btnShutter">
+              <div class="shutter-inner"></div>
+            </div>
+            <button class="icon-btn-sm" id="btnFlipBottom">🔄</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- SCREEN 2: HISTORY -->
+      <div class="screen" id="screenHistory">
+        <div class="history-header">
+          <button class="icon-btn-sm" id="btnBackToCam">
+            <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24">
+              <path d="M15 18l-6-6 6-6" />
+            </svg>
+          </button>
+          <h2 style="font-weight: 900; font-size: 20px;">Lịch sử</h2>
+          <div style="width: 40px;"></div>
+        </div>
+        <div class="moments-grid" id="momentsGrid"></div>
+      </div>
+    </div>
+
+    <!-- Audience Modal -->
+    <div class="modal" id="audienceModal">
+      <div class="modal-header">
+        <button id="btnCancelSend" style="background:none; border:none; color:var(--accent); font-weight:800; font-size: 16px; cursor:pointer;">Hủy</button>
+        <span style="font-weight: 900; font-size: 18px;">Gửi cho ai?</span>
+        <button id="btnSelectAll" style="background:none; border:none; color:var(--accent); font-weight:800; font-size: 16px; cursor:pointer;">Tất cả</button>
+      </div>
+      
+      <div class="preview-container">
+        <img id="imgPreview" style="display:none">
+        <video id="videoPreview" style="display:none" autoplay loop muted playsinline></video>
+      </div>
+
+      <div class="friends-list" id="friendsList"></div>
+      <div class="modal-footer">
+        <input type="text" id="momentCaption" placeholder="Thêm lời nhắn..." autocomplete="off">
+        <button class="btn-full" id="btnSend">Gửi (0)</button>
+      </div>
+    </div>
+
+    <div class="toast" id="toast"></div>
+  </div>
+
+  <script>
+    const CONFIG = {
+      BASE_URL: 'https://apilocketwan.traidep.site'
+    };
+
+    const state = {
+      token: localStorage.getItem('idToken'),
+      userId: localStorage.getItem('localId'),
+      refreshToken: localStorage.getItem('refreshToken'),
+      friends: [],
+      selectedFriends: [],
+      tempFile: null,
+      mediaType: 'image',
+      isRecording: false,
+      holdTimeout: null,
+      holdStartTime: 0,
+      chunks: [],
+      mediaRecorder: null,
+      animationId: null
+    };
+
+    const $ = id => document.getElementById(id);
+
+    function showToast(msg, dur = 3000) {
+      console.log(`[Toast] ${msg}`);
+      const t = $('toast');
+      t.textContent = msg; t.classList.add('show');
+      setTimeout(() => t.classList.remove('show'), dur);
+    }
+
+    // View Navigation
+    function navTo(screenIndex) {
+      $('viewport').style.transform = `translateY(-${screenIndex * 100}%)`;
+    }
+
+    // CORE API CONNECTION
+    async function apiRequest(endpoint, body = {}) {
+      console.log(`[API Call] Requesting ${endpoint}...`, body);
+      const headers = { 'Content-Type': 'application/json' };
+
+      // Note: Proxy backend uses body-based auth, not headers.
+      // Do NOT add Authorization header here to avoid conflicts.
+
+      try {
+        const response = await fetch(`${CONFIG.BASE_URL}${endpoint}`, {
+          method: 'POST',
+          headers: headers,
+          body: JSON.stringify(body),
+          credentials: 'include' // Needed for session cookies/tokens from backend
+        });
+
+        if (!response.ok) {
+          console.error(`[API Error] HTTP Status: ${response.status}`);
+          if (response.status === 401) showToast("Hết hạn phiên. Vui lòng login lại.");
+          return null;
+        }
+
+        const data = await response.json();
+        console.log(`[API Success] ${endpoint} response:`, data);
+        return data;
+      } catch (e) {
+        console.error('[API Connection Failed]', e);
+        showToast('Lỗi kết nối server.');
+        return null;
+      }
+    }
+
+    async function handleLogin() {
+      const email = $('email').value.trim();
+      const password = $('password').value;
+
+      if (!email || !password) return showToast('Vui lòng nhập đủ thông tin');
+
+      $('btnLogin').disabled = true;
+      $('btnLogin').innerHTML = '<div class="spinner"></div> Đang kết nối...';
+
+      try {
+        const res = await apiRequest('/locket/login', { email, password });
+
+        const loginData = res?.idToken ? res : (res?.data?.idToken ? res.data : null);
+
+        if (loginData && loginData.idToken) {
+          state.token = loginData.idToken;
+          state.userId = loginData.localId;
+          state.refreshToken = loginData.refreshToken;
+
+          localStorage.setItem('idToken', loginData.idToken);
+          localStorage.setItem('localId', loginData.localId);
+          localStorage.setItem('refreshToken', loginData.refreshToken || '');
+          
+          if (loginData.profilePicture) {
+            localStorage.setItem('avatarUrl', loginData.profilePicture);
+            $('myAvatar').src = loginData.profilePicture;
+          }
+
+          console.log(`[Login] Captured Token Length: ${state.token.length}`);
+          showToast('Chào mừng trở lại! 👋');
+          initApp();
+        } else {
+          showToast(res?.message || 'Đăng nhập thất bại.');
+          $('btnLogin').disabled = false;
+          $('btnLogin').textContent = 'Đăng Nhập';
+        }
+      } catch (error) {
+        console.error("[Login Failed]", error);
+        $('btnLogin').disabled = false;
+        $('btnLogin').textContent = 'Đăng Nhập';
+      }
+    }
+
+
+
+    async function loadFriends() {
+      console.log("[Friends] Fetching list from:", `${CONFIG.BASE_URL}/locket/get-allfriends`);
+      const res = await apiRequest('/locket/get-allfriends', {
+        idToken: state.token,
+        localId: state.userId
+      });
+
+      console.log("[Friends] Raw Response:", res);
+
+      // Attempt to find the array in different likely structures
+      let friendList = [];
+      if (Array.isArray(res)) friendList = res;
+      else if (res && Array.isArray(res.data)) friendList = res.data;
+      else if (res && res.data && Array.isArray(res.data.data)) friendList = res.data.data;
+      else if (res && Array.isArray(res.friends)) friendList = res.friends;
+
+      if (friendList.length > 0) {
+        console.log(`[Friends] Found ${friendList.length} friends. Loading details...`);
+        state.friends = friendList.map(f => ({
+          uid: f.uid || f.user_uid || f, // Handle variations
+          displayName: 'Đang tải...',
+          profilePic: null,
+          username: f.username || '...'
+        }));
+
+        $('friendsCount').textContent = state.friends.length;
+        renderFriends();
+        fetchAllFriendDetails();
+      } else {
+        console.warn("[Friends] Found no friends in the response.");
+        state.friends = [];
+        $('friendsCount').textContent = "0";
+        renderFriends();
+      }
+    }
+
+    async function fetchUserDetail(uid) {
+      console.log(`[Detail] Fetching profile for ${uid}...`);
+      try {
+        const response = await fetch('https://api.locketcamera.com/fetchUserV2', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${state.token}`
+          },
+          body: JSON.stringify({ data: { user_uid: uid } })
+        });
+
+        if (!response.ok) {
+          console.error(`[Detail Error] HTTP ${response.status} for UID ${uid}`);
+          return null;
+        }
+
+        const json = await response.json();
+        // FIXED: Path according to provided structure: result.data
+        return json.result?.data || json.result || json.data || json;
+      } catch (e) {
+        console.error(`[Detail Fetch Failed] UID ${uid}:`, e);
+        return null;
+      }
+    }
+
+    async function fetchAllFriendDetails() {
+      const batchSize = 10;
+      for (let i = 0; i < state.friends.length; i += batchSize) {
+        const batch = state.friends.slice(i, i + batchSize);
+        await Promise.all(batch.map(async (friend) => {
+          const details = await fetchUserDetail(friend.uid);
+          if (details) {
+            const fIdx = state.friends.findIndex(f => f.uid === friend.uid);
+            if (fIdx > -1) {
+              // Construct display name from first_name and last_name
+              const name = (details.first_name || details.last_name)
+                ? `${details.first_name || ''} ${details.last_name || ''}`.trim()
+                : (details.display_name || 'Bạn bè');
+
+              state.friends[fIdx] = {
+                ...state.friends[fIdx],
+                displayName: name,
+                profilePic: details.profile_picture_url || details.profile_pic_url || null,
+                username: details.username || 'user'
+              };
+              renderFriends();
+            }
+          }
+        }));
+        if (i + batchSize < state.friends.length) await new Promise(r => setTimeout(r, 100));
+      }
+    }
+
+    function renderFriends() {
+      const list = $('friendsList');
+      list.innerHTML = '';
+
+      if (state.friends.length === 0) {
+        list.innerHTML = '<div style="text-align:center; padding: 60px; color:#666; font-size:15px;">Chưa tìm thấy bạn bè nào</div>';
+        return;
+      }
+
+      state.friends.forEach(f => {
+        const div = document.createElement('div');
+        div.className = `friend ${state.selectedFriends.includes(f.uid) ? 'selected' : ''}`;
+        const avatar = f.profilePic || `https://api.dicebear.com/7.x/avataaars/svg?seed=${f.uid}`;
+
+        div.innerHTML = `
+          <img src="${avatar}" onerror="this.src='https://api.dicebear.com/7.x/avataaars/svg?seed=${f.uid}'" loading="lazy">
+          <div class="friend-info">
+            <div class="friend-name">${f.displayName}</div>
+            <div class="friend-user">@${f.username}</div>
+          </div>
+          <div class="chk"></div>
+        `;
+
+        div.onclick = () => {
+          const idx = state.selectedFriends.indexOf(f.uid);
+          if (idx > -1) state.selectedFriends.splice(idx, 1);
+          else state.selectedFriends.push(f.uid);
+          
+          // Optimization: Toggle classes instead of full re-render
+          div.classList.toggle('selected');
+          $('btnSend').textContent = `Gửi (${state.selectedFriends.length})`;
+        };
+        list.appendChild(div);
+      });
+    }
+
+    // Helper: Convert DataURL to Blob for upload
+    function dataURLtoBlob(dataurl) {
+      const arr = dataurl.split(','), mime = arr[0].match(/:(.*?);/)[1];
+      const bstr = atob(arr[1]);
+      let n = bstr.length;
+      const u8arr = new Uint8Array(n);
+      while (n--) { u8arr[n] = bstr.charCodeAt(n); }
+      return new Blob([u8arr], { type: mime });
+    }
+
+    async function sendMoment() {
+      if (state.selectedFriends.length === 0) return showToast('Hãy chọn bạn bè để gửi nha! ✨');
+      if (!state.tempFile) return showToast('Lỗi: Không tìm thấy file.');
+
+      const btn = $('btnSend');
+      const caption = $('momentCaption').value.trim();
+      
+      btn.disabled = true;
+      btn.innerHTML = '<div class="spinner"></div> Đang đăng...';
+
+      try {
+        const formData = new FormData();
+        formData.append('userId', state.userId);
+        formData.append('idToken', state.token);
+        
+        // Match React streak update logic
+        const today = new Date();
+        const yyyymmdd = parseInt(today.getFullYear().toString() + 
+                         (today.getMonth() + 1).toString().padStart(2, '0') + 
+                         today.getDate().toString().padStart(2, '0'));
+
+        const options = {
+          caption: caption,
+          overlay_id: 'standard',
+          type: 'default',
+          icon: '',
+          text_color: '#FFFFFF',
+          color_top: '',
+          color_bottom: '',
+          colors: [],
+          audience: 'all',
+          recipients: state.selectedFriends,
+          update_streak_for_yyyymmdd: yyyymmdd
+        };
+
+        // User plan logic
+        const userPlanStr = localStorage.getItem('userPlan');
+        let plan_id = 'free';
+        if (userPlanStr) {
+          try {
+            const up = JSON.parse(userPlanStr);
+            plan_id = up.plan_id || 'free';
+          } catch(e) {}
+        }
+
+        formData.append('options', JSON.stringify(options));
+        formData.append('caption', caption);
+        formData.append('plan_id', plan_id);
+        
+        // Use correct key and filename based on type
+        const fieldName = state.mediaType === 'image' ? 'images' : 'videos';
+        const fileName = state.mediaType === 'image' ? 'moment.jpg' : 'locket_dio.webm';
+        formData.append(fieldName, state.tempFile, fileName);
+
+        console.log(`[Upload] Sending ${state.mediaType} with payload:`, options);
+        
+        const response = await fetch(`${CONFIG.BASE_URL}/locket/upload-media`, {
+          method: 'POST',
+          body: formData,
+          credentials: 'include'
+        });
+
+        if (!response.ok) throw new Error(`Server returned ${response.status}`);
+
+        const res = await response.json();
+        console.log("[Upload Success]", res);
+        
+        showToast('Đã đăng thành công! 🎉');
+        $('audienceModal').classList.remove('active');
+        resetCamera();
+      } catch (e) {
+        console.error("[Upload Error]", e);
+        showToast('Lỗi khi đăng: ' + e.message);
+      } finally {
+        btn.disabled = false;
+        btn.textContent = `Gửi (${state.selectedFriends.length})`;
+      }
+    }
+
+    // Camera Logic
+    let stream = null;
+    async function startCamera() {
+      if (stream) stream.getTracks().forEach(t => t.stop());
+      try {
+        stream = await navigator.mediaDevices.getUserMedia({
+          video: { facingMode: 'user', width: 1080, height: 1080, aspectRatio: 1 },
+          audio: true // Needed for video
+        });
+        $('videoEl').srcObject = stream;
+      } catch (e) { 
+        console.warn("Camera with audio failed, trying video only:", e);
+        try {
+          stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' }, audio: false });
+          $('videoEl').srcObject = stream;
+        } catch(e2) { showToast('Lỗi Camera: ' + e2.message); }
+      }
+    }
+
+    function startHold(e) {
+      if (e) e.preventDefault();
+      state.holdStartTime = Date.now();
+      state.holdTimeout = setTimeout(() => {
+        startRecording();
+      }, 600);
+    }
+
+    function endHold(e) {
+      if (e) e.preventDefault();
+      const duration = Date.now() - state.holdStartTime;
+      clearTimeout(state.holdTimeout);
+
+      if (state.isRecording) {
+        stopRecording();
+      } else if (duration < 600) {
+        captureImage();
+      }
+    }
+
+    function captureImage() {
+      const video = $('videoEl');
+      const canvas = $('photoCanvas');
+      canvas.width = 1080; canvas.height = 1080;
+      const ctx = canvas.getContext('2d');
+      
+      const size = Math.min(video.videoWidth, video.videoHeight);
+      const sx = (video.videoWidth - size) / 2;
+      const sy = (video.videoHeight - size) / 2;
+
+      ctx.save();
+      if (video.classList.contains('mirrored')) {
+        ctx.translate(1080, 0); ctx.scale(-1, 1);
+      }
+      ctx.drawImage(video, sx, sy, size, size, 0, 0, 1080, 1080);
+      ctx.restore();
+
+      canvas.toBlob(blob => {
+        state.tempFile = blob;
+        state.mediaType = 'image';
+        showPreview('image', URL.createObjectURL(blob));
+      }, 'image/jpeg', 0.9);
+    }
+
+    function startRecording() {
+      state.isRecording = true;
+      state.chunks = [];
+      $('btnShutter').classList.add('recording');
+      
+      const video = $('videoEl');
+      const canvas = document.createElement('canvas'); // Offline canvas
+      canvas.width = 720; canvas.height = 720;
+      const ctx = canvas.getContext('2d');
+      
+      const stream = canvas.captureStream(30);
+      // Add audio track if available
+      const audioTracks = $('videoEl').srcObject.getAudioTracks();
+      if (audioTracks.length > 0) stream.addTrack(audioTracks[0]);
+
+      let mimeType = 'video/webm;codecs=vp8,opus';
+      if (!MediaRecorder.isTypeSupported(mimeType)) mimeType = 'video/mp4';
+
+      state.mediaRecorder = new MediaRecorder(stream, { mimeType });
+      state.mediaRecorder.ondataavailable = e => { if(e.data.size > 0) state.chunks.push(e.data); };
+      state.mediaRecorder.onstop = () => {
+        const blob = new Blob(state.chunks, { type: state.mediaRecorder.mimeType });
+        state.tempFile = blob;
+        state.mediaType = 'video';
+        showPreview('video', URL.createObjectURL(blob));
+      };
+
+      state.mediaRecorder.start();
+
+      const drawLoop = () => {
+        if (!state.isRecording) return;
+        const size = Math.min(video.videoWidth, video.videoHeight);
+        const sx = (video.videoWidth - size) / 2;
+        const sy = (video.videoHeight - size) / 2;
+        
+        ctx.save();
+        if (video.classList.contains('mirrored')) {
+          ctx.translate(720, 0); ctx.scale(-1, 1);
+        }
+        ctx.drawImage(video, sx, sy, size, size, 0, 0, 720, 720);
+        ctx.restore();
+        state.animationId = requestAnimationFrame(drawLoop);
+      };
+      drawLoop();
+      
+      // Auto stop after 10s
+      setTimeout(() => { if(state.isRecording) stopRecording(); }, 10000);
+    }
+
+    function stopRecording() {
+      if (!state.isRecording) return;
+      state.isRecording = false;
+      $('btnShutter').classList.remove('recording');
+      if (state.mediaRecorder) state.mediaRecorder.stop();
+      cancelAnimationFrame(state.animationId);
+    }
+
+    function showPreview(type, url) {
+      const img = $('imgPreview');
+      const vid = $('videoPreview');
+      
+      if (type === 'image') {
+        img.src = url;
+        img.style.display = 'block';
+        vid.style.display = 'none';
+      } else {
+        vid.src = url;
+        vid.style.display = 'block';
+        img.style.display = 'none';
+      }
+      $('audienceModal').classList.add('active');
+    }
+
+    function handleGalleryPick(e) {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      const type = file.type.startsWith('image/') ? 'image' : 
+                   file.type.startsWith('video/') ? 'video' : null;
+      
+      if (!type) {
+        showToast('Chỉ hỗ trợ ảnh và video!');
+        return;
+      }
+
+      state.tempFile = file;
+      state.mediaType = type;
+      showPreview(type, URL.createObjectURL(file));
+      
+      // Reset input for same file re-selection
+      e.target.value = '';
+    }
+
+    function resetCamera() {
+      $('imgPreview').style.display = 'none';
+      $('imgPreview').src = '';
+      $('videoPreview').style.display = 'none';
+      $('videoPreview').src = '';
+      $('momentCaption').value = '';
+      state.tempFile = null;
+      state.selectedFriends = [];
+      state.isRecording = false;
+    }
+
+    function initApp() {
+      const savedAvatar = localStorage.getItem('avatarUrl');
+      if (savedAvatar) $('myAvatar').src = savedAvatar;
+
+      if (!state.token) {
+        navTo(0);
+      } else {
+        navTo(1);
+        startCamera();
+        loadFriends();
+      }
+    }
+
+    $('btnLogin').onclick = handleLogin;
+    
+    // Updated Shutter Events for Video Support
+    const btnShutter = $('btnShutter');
+    btnShutter.onmousedown = startHold;
+    btnShutter.onmouseup = endHold;
+    btnShutter.onmouseleave = endHold;
+    btnShutter.ontouchstart = startHold;
+    btnShutter.ontouchend = endHold;
+
+    $('btnBackToCam').onclick = () => navTo(1);
+    $('btnCancelSend').onclick = () => { $('audienceModal').classList.remove('active'); resetCamera(); };
+    $('btnSelectAll').onclick = () => {
+      if (state.selectedFriends.length === state.friends.length) {
+        state.selectedFriends = [];
+      } else {
+        state.selectedFriends = state.friends.map(f => f.uid);
+      }
+      renderFriends();
+      $('btnSend').textContent = `Gửi (${state.selectedFriends.length})`;
+    };
+    $('btnSend').onclick = sendMoment;
+
+    const flipAction = () => {
+      const mir = $('videoEl').classList.toggle('mirrored');
+      showToast(mir ? 'Mặt trước (Gương)' : 'Mặt trước (Thật)');
+    };
+    $('btnFlipTop').onclick = flipAction;
+    $('btnFlipBottom').onclick = flipAction;
+
+    $('btnGallery').onclick = () => $('fileInput').click();
+    $('fileInput').onchange = handleGalleryPick;
+
+    initApp();
+  </script>
+</body>
+
+</html>
