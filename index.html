@@ -369,7 +369,7 @@
     }
 
     .modal-header {
-      padding: 60px 24px 20px;
+      padding: 50px 24px 15px; /* Reduced from 60px */
       display: flex;
       justify-content: space-between;
       align-items: center;
@@ -379,6 +379,15 @@
       position: sticky;
       top: 0;
       z-index: 10;
+    }
+
+    /* Small Screen Optimizations */
+    @media (max-height: 600px) {
+      .modal-header { padding-top: 35px; padding-bottom: 10px; }
+      .modal-footer { padding: 15px 20px 20px !important; }
+      .preview-container { max-height: 240px; }
+      .login-title { font-size: 42px; margin-bottom: 10px; }
+      .login-card { padding: 20px; }
     }
 
     .friends-list {
@@ -453,7 +462,7 @@
     }
 
     .modal-footer {
-      padding: 24px 24px 60px;
+      padding: 24px 24px 40px; /* Reduced from 60px bottom */
       background: #000;
       border-top: 1px solid #1a1a1b;
       display: flex;
@@ -483,6 +492,10 @@
       aspect-ratio: 1/1;
       background: #000;
       position: relative;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      overflow: hidden;
     }
 
     .preview-container img, .preview-container video {
