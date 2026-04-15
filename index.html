@@ -96,17 +96,17 @@
 
     .login-title {
       font-family: 'Dancing Script', cursive;
-      font-size: 64px;
+      font-size: 52px; /* Smaller for iPhone 5 */
       color: var(--accent);
       text-align: center;
-      margin-bottom: 40px;
+      margin-bottom: 20px; /* Reduced */
       text-shadow: 0 0 20px rgba(255, 214, 0, 0.3);
     }
 
     .login-card {
       background: var(--surface);
       border-radius: var(--radius-l);
-      padding: 40px 24px;
+      padding: 30px 20px; /* Reduced */
       border: 1px solid var(--glass-border);
       box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
     }
@@ -200,18 +200,28 @@
     }
 
     .cam-wrapper {
-      margin: 20px 24px;
-      flex: 1;
-      aspect-ratio: 1/1;
+      margin: 15px auto;
+      width: 90%;
+      height: auto;
+      position: relative;
       border-radius: var(--radius-xl);
       overflow: hidden;
-      position: relative;
       background: #111;
       box-shadow: 0 30px 60px rgba(0, 0, 0, 0.6);
     }
 
-    #videoEl,
-    #photoCanvas {
+    /* Fixed 1:1 Aspect Ratio without aspect-ratio property */
+    .cam-wrapper::before {
+      content: "";
+      display: block;
+      padding-top: 100%;
+    }
+
+    .cam-wrapper video,
+    .cam-wrapper canvas {
+      position: absolute;
+      top: 0;
+      left: 0;
       width: 100%;
       height: 100%;
       object-fit: cover;
@@ -280,7 +290,7 @@
     .shutter-ring::after {
       content: '';
       position: absolute;
-      inset: -8px;
+      top: -8px; left: -8px; right: -8px; bottom: -8px; /* Replacement for inset */
       border: 4px solid transparent;
       border-radius: 50%;
       transition: all 0.2s;
@@ -347,7 +357,7 @@
 
     .modal {
       position: absolute;
-      inset: 0;
+      top: 0; left: 0; right: 0; bottom: 0; /* Replacement for inset */
       background: #000;
       z-index: 500;
       display: none;
@@ -662,7 +672,13 @@
       try {
         const res = await apiRequest('/locket/login', { email, password });
 
-        const loginData = res?.idToken ? res : (res?.data?.idToken ? res.data : null);
+        // Standard checks (No Optional Chaining for iPhone 5)
+        let loginData = null;
+        if (res && res.idToken) {
+          loginData = res;
+        } else if (res && res.data && res.data.idToken) {
+          loginData = res.data;
+        }
 
         if (loginData && loginData.idToken) {
           state.token = loginData.idToken;
@@ -678,11 +694,11 @@
             $('myAvatar').src = loginData.profilePicture;
           }
 
-          console.log(`[Login] Captured Token Length: ${state.token.length}`);
+          console.log('[Login] Success');
           showToast('Chào mừng trở lại! 👋');
           initApp();
         } else {
-          showToast(res?.message || 'Đăng nhập thất bại.');
+          showToast((res && res.message) ? res.message : 'Đăng nhập thất bại.');
           $('btnLogin').disabled = false;
           $('btnLogin').textContent = 'Đăng Nhập';
         }
@@ -749,10 +765,13 @@
         }
 
         const json = await response.json();
-        // FIXED: Path according to provided structure: result.data
-        return json.result?.data || json.result || json.data || json;
+        // Safe access (No Optional Chaining)
+        if (json && json.result && json.result.data) return json.result.data;
+        if (json && json.result) return json.result;
+        if (json && json.data) return json.data;
+        return json;
       } catch (e) {
-        console.error(`[Detail Fetch Failed] UID ${uid}:`, e);
+        console.error('UID Error:', uid);
         return null;
       }
     }
@@ -916,16 +935,24 @@
       if (stream) stream.getTracks().forEach(t => t.stop());
       try {
         stream = await navigator.mediaDevices.getUserMedia({
-          video: { facingMode: 'user', width: 1080, height: 1080, aspectRatio: 1 },
-          audio: true // Needed for video
+          video: { 
+            facingMode: 'user', 
+            width: { ideal: 720 }, 
+            height: { ideal: 720 },
+            aspectRatio: { exact: 1 } // Strictly 1:1 from hardware if possible
+          },
+          audio: true
         });
         $('videoEl').srcObject = stream;
       } catch (e) { 
-        console.warn("Camera with audio failed, trying video only:", e);
+        console.warn("Retrying without audio...");
         try {
-          stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' }, audio: false });
+          stream = await navigator.mediaDevices.getUserMedia({ 
+            video: { facingMode: 'user', aspectRatio: { exact: 1 } }, 
+            audio: false 
+          });
           $('videoEl').srcObject = stream;
-        } catch(e2) { showToast('Lỗi Camera: ' + e2.message); }
+        } catch(e2) { showToast('Lỗi Camera'); }
       }
     }
 
