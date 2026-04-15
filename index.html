@@ -200,17 +200,16 @@
     }
 
     .cam-wrapper {
-      margin: 15px auto;
-      width: 90%;
+      margin: 10px 0;
+      width: 100%; /* Full width to remove gaps */
       height: auto;
       position: relative;
-      border-radius: var(--radius-xl);
       overflow: hidden;
       background: #111;
-      box-shadow: 0 30px 60px rgba(0, 0, 0, 0.6);
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
     }
 
-    /* Fixed 1:1 Aspect Ratio without aspect-ratio property */
+    /* Fixed 1:1 Aspect Ratio */
     .cam-wrapper::before {
       content: "";
       display: block;
@@ -225,6 +224,7 @@
       width: 100%;
       height: 100%;
       object-fit: cover;
+      object-position: center;
     }
 
     #videoEl.mirrored {
@@ -611,7 +611,13 @@
       holdStartTime: 0,
       chunks: [],
       mediaRecorder: null,
-      animationId: null
+      animationId: null,
+      facingMode: 'user', // Default to front camera
+      vWidth: 0,
+      vHeight: 0,
+      vSize: 0,
+      vSx: 0,
+      vSy: 0
     };
 
     const $ = id => document.getElementById(id);
@@ -932,25 +938,45 @@
     // Camera Logic
     let stream = null;
     async function startCamera() {
-      if (stream) stream.getTracks().forEach(t => t.stop());
+      if (stream) {
+        stream.getTracks().forEach(function(t) { t.stop(); });
+      }
+      
+      const constraints = {
+        video: { 
+          facingMode: state.facingMode,
+          width: { ideal: 720 },
+          height: { ideal: 720 }
+        },
+        audio: true
+      };
+
+      // Set mirroring only for front camera
+      if (state.facingMode === 'user') {
+        $('videoEl').classList.add('mirrored');
+      } else {
+        $('videoEl').classList.remove('mirrored');
+      }
+
       try {
-        stream = await navigator.mediaDevices.getUserMedia({
-          video: { 
-            facingMode: 'user', 
-            width: { ideal: 720 }, 
-            height: { ideal: 720 },
-            aspectRatio: { exact: 1 } // Strictly 1:1 from hardware if possible
-          },
-          audio: true
-        });
-        $('videoEl').srcObject = stream;
+        stream = await navigator.mediaDevices.getUserMedia(constraints);
+        const video = $('videoEl');
+        video.srcObject = stream;
+        
+        // Cache dimensions once metadata loads to save CPU on iPhone 5
+        video.onloadedmetadata = function() {
+          state.vWidth = video.videoWidth;
+          state.vHeight = video.videoHeight;
+          state.vSize = Math.min(state.vWidth, state.vHeight);
+          state.vSx = (state.vWidth - state.vSize) / 2;
+          state.vSy = (state.vHeight - state.vSize) / 2;
+          console.log(`[Camera] Cached: ${state.vWidth}x${state.vHeight}, Crop: ${state.vSize}x${state.vSize}`);
+        };
       } catch (e) { 
-        console.warn("Retrying without audio...");
+        console.warn("Retrying camera without audio...");
         try {
-          stream = await navigator.mediaDevices.getUserMedia({ 
-            video: { facingMode: 'user', aspectRatio: { exact: 1 } }, 
-            audio: false 
-          });
+          const vOnly = { video: { facingMode: state.facingMode }, audio: false };
+          stream = await navigator.mediaDevices.getUserMedia(vOnly);
           $('videoEl').srcObject = stream;
         } catch(e2) { showToast('Lỗi Camera'); }
       }
@@ -982,9 +1008,10 @@
       canvas.width = 1080; canvas.height = 1080;
       const ctx = canvas.getContext('2d');
       
-      const size = Math.min(video.videoWidth, video.videoHeight);
-      const sx = (video.videoWidth - size) / 2;
-      const sy = (video.videoHeight - size) / 2;
+      // Use cached values for legacy performance
+      const size = state.vSize || Math.min(video.videoWidth, video.videoHeight);
+      const sx = (state.vSize !== 0) ? state.vSx : (video.videoWidth - size) / 2;
+      const sy = (state.vSize !== 0) ? state.vSy : (video.videoHeight - size) / 2;
 
       ctx.save();
       if (video.classList.contains('mirrored')) {
@@ -1031,12 +1058,14 @@
 
       const drawLoop = () => {
         if (!state.isRecording) return;
-        const size = Math.min(video.videoWidth, video.videoHeight);
-        const sx = (video.videoWidth - size) / 2;
-        const sy = (video.videoHeight - size) / 2;
+        
+        // Optimize: Use cached values to avoid repeated property access
+        const size = state.vSize;
+        const sx = state.vSx;
+        const sy = state.vSy;
         
         ctx.save();
-        if (video.classList.contains('mirrored')) {
+        if (state.facingMode === 'user') { // Use state instead of class check
           ctx.translate(720, 0); ctx.scale(-1, 1);
         }
         ctx.drawImage(video, sx, sy, size, size, 0, 0, 720, 720);
@@ -1140,9 +1169,10 @@
     };
     $('btnSend').onclick = sendMoment;
 
-    const flipAction = () => {
-      const mir = $('videoEl').classList.toggle('mirrored');
-      showToast(mir ? 'Mặt trước (Gương)' : 'Mặt trước (Thật)');
+    const flipAction = async function() {
+      state.facingMode = (state.facingMode === 'user') ? 'environment' : 'user';
+      showToast(state.facingMode === 'user' ? 'Mặt trước (Gương)' : 'Mặt sau');
+      await startCamera();
     };
     $('btnFlipTop').onclick = flipAction;
     $('btnFlipBottom').onclick = flipAction;
